@@ -1,2 +1,0 @@
-defmodule Kvstore do
-end
