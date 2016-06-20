@@ -11,16 +11,12 @@ defmodule KVStore do
     GenServer.call(server, {:get, key})
   end
 
-  def getAll(server) do
-    GenServer.call(server, {:getAll})
-  end
-
   def put(server, key, value) do
     case (validate(key, value)) do
       {:error, reasons} -> {:error, reasons}
       :ok ->
         GenServer.cast(server, {:put, key, value})
-    end    
+    end
   end
 
   def delete(server, key) do
@@ -29,6 +25,16 @@ defmodule KVStore do
 
   def break(server) do
     Process.exit(server, :shutdown)
+  end
+
+  # Operators: gt, lt, gte, lte
+  def filter(server, operator, value) do
+    operator = String.downcase(operator)
+    if (validate(operator)) do
+      GenServer.call(server, {:filter, value, operator})
+    else
+      {:error, "Operator should be: gt, gte, lt or lte"}
+    end
   end
 
   ## Server Callbacks
@@ -45,10 +51,6 @@ defmodule KVStore do
     end
   end
 
-  def handle_call({:getAll}, _from, state) do
-    {:reply, {:ok, state}, state}
-  end
-
   def handle_cast({:put, key, value}, state) do
     {:noreply, Map.put(state, key, value)}
   end
@@ -62,7 +64,23 @@ defmodule KVStore do
     {:noreply, state}
   end
 
+  def handle_call({:filter, value, operator}, _from, state) do
+    values = Map.values(state)
+    results = Enum.filter(values, fn(x) -> compare().(x, value, operator) end)
+    {:reply, {:ok, results}, state}
+  end
+
   ## Private
+
+  defp compare() do
+    f = fn
+          a,b,operator when operator=="gt" -> a>b
+          a,b,operator when operator=="gte" -> a>=b
+          a,b,operator when operator=="lt" -> a<b
+          a,b,operator when operator=="lte" -> a<=b
+        end
+    f
+  end
 
   defp validateType(val) do
     if !(is_bitstring(val)) do
@@ -78,6 +96,11 @@ defmodule KVStore do
     else
       :ok
     end
+  end
+
+  defp validate(operator) do
+    operators = ["gt", "gte", "lt", "lte"]
+    Enum.any?(operators, fn(x) -> x == operator end)
   end
 
   defp validate(key, value) do
