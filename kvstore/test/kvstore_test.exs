@@ -5,7 +5,7 @@ defmodule KVStoreTest do
     value = %{name: "martin", age: 30}
     {:ok, sup_pid} = KVStore.Supervisor.start_link
     {:ok, worker_pid} = Supervisor.start_child(sup_pid, [:server])
-    assert KVStore.put(:server, 1, value) == {:ok, "new record"}
+    assert KVStore.put(:server, 1, value) == :ok
     assert KVStore.get(:server, 1) == {:ok, value}
   end
 

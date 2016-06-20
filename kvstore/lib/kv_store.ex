@@ -1,11 +1,7 @@
 defmodule KVStore do
   use GenServer
 
-  # ------- Client API
-
-  def start do
-    GenServer.start(__MODULE__, :ok, [])
-  end
+  ## Client API
 
   def start_link(name) do
     GenServer.start_link(__MODULE__, :ok, [name: name])
@@ -13,6 +9,10 @@ defmodule KVStore do
 
   def get(server, key) do
     GenServer.call(server, {:get, key})
+  end
+
+  def getAll(server) do
+    GenServer.call(server, {:getAll})
   end
 
   def put(server, key, value) do
@@ -30,7 +30,7 @@ defmodule KVStore do
   ## Server Callbacks
 
   def init(:ok) do
-    {:ok, []}
+    {:ok, %{}}
   end
 
   def handle_call({:get, key}, _from, state) do
@@ -39,6 +39,10 @@ defmodule KVStore do
     else
       {:reply, {:ok, :not_found}, state}
     end
+  end
+
+  def handle_call({:getAll}, _from, state) do
+    {:reply, {:ok, state}, state}
   end
 
   def handle_cast({:put, key, value}, state) do

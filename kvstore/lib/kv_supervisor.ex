@@ -16,7 +16,7 @@ defmodule KVStore.Supervisor do
 
   def init([]) do
     children = [
-      worker(Scraper, [], restart: :transient)
+      worker(KVStore, [], restart: :transient)
     ]
 
     supervise(children, strategy: :simple_one_for_one)
