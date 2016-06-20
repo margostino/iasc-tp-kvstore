@@ -16,7 +16,17 @@ defmodule KVStore do
   end
 
   def put(server, key, value) do
-    GenServer.cast(server, {:put, key, value})
+    if !(is_bitstring(key) && is_bitstring(value)) do
+      {:error, "Key/Value must be String"}
+    else
+      key_size = Application.get_env(:kvstore, :key_size)
+      value_size = Application.get_env(:kvstore, :value_size)
+      if (String.length(key) <= key_size && String.length(value) <= value_size) do
+        GenServer.cast(server, {:put, key, value})
+      else
+        {:error, "Key/Value wrong size"}
+      end
+    end
   end
 
   def delete(server, key) do
