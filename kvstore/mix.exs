@@ -1,4 +1,4 @@
-defmodule Kvstore.Mixfile do
+defmodule KVStore.Mixfile do
   use Mix.Project
 
   def project do
@@ -14,9 +14,11 @@ defmodule Kvstore.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger]]
+    [
+      applications: [:logger],
+      mod: {KVStore, []}
+    ]
   end
-
   # Dependencies can be Hex packages:
   #
   #   {:mydep, "~> 0.3.0"}
