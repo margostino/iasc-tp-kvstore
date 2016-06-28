@@ -76,6 +76,20 @@ defmodule KVStore.Api do
     {:noreply, Enum.into([], Map.to_list(Map.put(map, key, value)))}
   end
 
+  def handle_cast({:delete, key}, state) do
+    {:noreply, Map.delete(Enum.into(state, %{}), key)}
+  end
+
+  def handle_call({:filter, value, operator}, _from, state) do
+    values = Map.values(Enum.into(state, %{}))
+    results = Enum.filter(values, fn(x) -> compare().(x, value, operator) end)
+    {:reply, {:ok, results}, state}
+  end
+
+  def handle_info(msg, state) do
+    IO.puts "Message not understood :("
+    {:noreply, state}
+  end
 
   ## Private -------------------------------------------------------------------
   #-----------------------------------------------------------------------------
