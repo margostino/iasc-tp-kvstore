@@ -14,4 +14,9 @@ defmodule KVStoreTest do
     assert KVStore.Api.filter("gtds", "a") == {:error, "Operator should be: gt, gte, lt or lte"}
   end
 
+  test "test delete key" do
+    assert KVStore.Api.put("k1", "b") == :ok
+    assert KVStore.Api.delete("k1") == :ok
+  end
+
 end
