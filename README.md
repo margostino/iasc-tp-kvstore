@@ -1,6 +1,6 @@
 > TP IASC KVStore Distribuido OTP
 
-La aplicación en un `PingPongServer`: un actor al cual le envía `ping`, y te responde `pong`
+La aplicación en un implementa actores distribuidos: cluster de orquestadores y cluster de data nodes
 
 Elementos:
 
