@@ -8,7 +8,8 @@ defmodule KVStore do
     Logger.info("KVStore application in #{inspect type} mode")
 
     children = [
-      worker(KVStore.Api, [])
+      worker(KVStore.Api, []),
+      worker(KVStore.Data, [])
     ]
 
     opts = [strategy: :one_for_one, name: KVStore.Supervisor]
