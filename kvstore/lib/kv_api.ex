@@ -2,9 +2,9 @@ defmodule KVStore.Api do
   use GenServer
   require Logger
 
-  def start_link({maxKeys, keySize, valueSize}) do
+  def start_link do
     Logger.info "Starting server"
-    GenServer.start_link(__MODULE__, {maxKeys, keySize, valueSize}, name: {:global, __MODULE__})
+    GenServer.start_link(__MODULE__, [], name: {:global, __MODULE__})
   end
 
   ## Client API
@@ -49,46 +49,41 @@ defmodule KVStore.Api do
   ## Server Callbacks ----------------------------------------------------------
   #-----------------------------------------------------------------------------
 
-  def init(configValues) do
-        #{maxKeys, keySize, valueSize} = configValues
-      {:ok, {[], configValues}}
-  end
-
-  def handle_call({:get, key}, _from, {state,configValues}) do
+  def handle_call({:get, key}, _from, state) do
     Logger.info "GET: #{key}"
     map = Enum.into(state, %{})
     if Map.has_key?(map, key) do
-      {:reply, {:ok, Map.get(map, key)}, {state,configValues}}
+      {:reply, {:ok, Map.get(map, key)}, state}
     else
-      {:reply, {:ok, :not_found}, {state,configValues}}
+      {:reply, {:ok, :not_found}, state}
     end
   end
 
-  def handle_call({:keys}, _from, {state,configValues}) do
+  def handle_call({:keys}, _from, state) do
     map = Enum.into(state, %{})
-    {:reply, {:ok, Map.keys(map)}, {state,configValues}}
+    {:reply, {:ok, Map.keys(map)}, state}
   end
 
-  def handle_call({:values}, _from, {state,configValues}) do
+  def handle_call({:values}, _from, state) do
     map = Enum.into(state, %{})
-    {:reply, {:ok, Map.values(map)}, {state,configValues}}
+    {:reply, {:ok, Map.values(map)}, state}
   end
 
-  def handle_cast({:put, key, value}, {state,configValues}) do
+  def handle_cast({:put, key, value}, state) do
     Logger.info "PUT: #{key},#{value}"
     map = Enum.into(state, %{})
     #{:noreply, Enum.into([], ["#{key}": value])}
-    {:noreply, {Enum.into([], Map.to_list(Map.put(map, key, value))), configValues}}
+    {:noreply, Enum.into([], Map.to_list(Map.put(map, key, value)))}
   end
 
-  def handle_cast({:delete, key}, {state,configValues}) do
-    {:noreply, {Map.delete(Enum.into(state, %{}), key), configValues}}
+  def handle_cast({:delete, key}, state) do
+    {:noreply, Map.delete(Enum.into(state, %{}), key)}
   end
 
-  def handle_call({:filter, value, operator}, _from, {state,configValues}) do
+  def handle_call({:filter, value, operator}, _from, state) do
     values = Map.values(Enum.into(state, %{}))
     results = Enum.filter(values, fn(x) -> compare().(x, value, operator) end)
-    {:reply, {:ok, results}, {state,configValues}}
+    {:reply, {:ok, results}, state}
   end
 
   def handle_info(msg, state) do
