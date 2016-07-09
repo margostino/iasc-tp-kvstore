@@ -1,4 +1,4 @@
-> TP IASC KVStore Distribuido OTP
+# TP IASC - KVStore Distribuido OTP
 
 La aplicación en un implementa actores distribuidos: cluster de orquestadores y cluster de data nodes
 
@@ -9,40 +9,71 @@ Elementos:
 * Supervisores
 * Alias locales y globales
 
-## Levantando una sóla VM
+## Uso
 
 ```bash
-iex -S mix
+mix deps.get 
+mix compile
 ```
 
-## Levantando múltiples VMs
-
+## Levantar nodos de datos en tres terminales diferentes 
 
 ```bash
-iex --sname foo -S mix
+cd apps/worker 
+iex --name dn1@127.0.0.1 -S mix run
 ```
-
-Luego se pueden utilizar las siguientes herramientas para hacer comunicación entre VMs:
-
-* `Node.spawn`
-* `:rpc.call`
-
-## Levantando múltiples VMs
 
 ```bash
-iex --name master@127.0.0.1 --cookie cookie -pa _build/dev/lib/kvstore/ebin/ --app kvstore --erl "-config config/master"
-iex --name slave1@127.0.0.1 --cookie cookie -pa _build/dev/lib/kvstore/ebin/ --app kvstore --erl "-config config/slave1"
-iex --name slave2@127.0.0.1 --cookie cookie -pa _build/dev/lib/kvstore/ebin/ --app kvstore --erl "-config config/slave2"
+cd apps/worker 
+iex --name dn2@127.0.0.1 -S mix run
 ```
-
-Probar matar una vm y ver que después el proceso renace en la siguiente de menor prioridad
-
-## Conectar un cliente por cookie
 
 ```bash
-$ iex --name client@127.0.0.1 --cookie cookie
-> Node.spawn_link :"master@127.0.0.1", fn -> [] end
-> Node.list
-> Node.ping :"master@127.0.0.1"
-> GenServer.call({:global, KVStore.Api}, {:get, "1"})
+cd apps/worker 
+iex --name dn3@127.0.0.1 -S mix run
 ```
+
+## Probar la interface consola 
+
+### Levantar un nodo coordinador en una terminal 
+
+```bash
+cd apps/store
+iex --name cn1@127.0.0.1 -S mix run
+```
+
+```elixir
+iex> KVStore.put("key1", "value1")
+iex> KVStore.put("key2", "value2")
+iex> KVStore.put("key3", "tres")
+iex> KVStore.get("key1")
+iex> KVStore.delete("key1")
+iex> KVStore.filter("gt", "a")
+iex> KVStore.filter("gte", "a")
+iex> KVStore.filter("lt", "a")
+iex> KVStore.filter("lte", "a")
+```
+
+## Probar la interface REST
+
+### Deshabilitar el nodo coordinador anterior y levantar la aplicación rest 
+
+```bash
+cd apps/rest
+iex --name cn1@127.0.0.1 -S mix run
+```
+Probar interface con curl (o cualquier cliente REST)
+
+```bash
+curl -X POST --data "key=key1&value=value1" http://localhost:8888/kvs
+curl -X POST --data "key=key3&value=value3" http://localhost:8888/kvs
+curl -X GET http://localhost:8888/kvs/key1
+curl -X GET http://localhost:8888/kvs/key3
+curl -X GET http://localhost:8888/kvs/noexiste
+curl -X DELETE http://localhost:8888/kvs/key1
+```
+
+## TODO 
+
+### scripts y archivos de config para armar clusters en umbrella apps
+### error handling, nodos caídos, etc
