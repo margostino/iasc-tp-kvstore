@@ -62,8 +62,8 @@ curl -X DELETE http://localhost:8888/kvs/key1
 
 Luego: 
 
-Deshabilitar cn1 y verificar que el coordinador que responde es cn2
-Deshabilitar cn2 y verificar que el coordinador que responde es cn3
+**Deshabilitar cn1 y verificar que el coordinador que responde es cn2**
+**Deshabilitar cn2 y verificar que el coordinador que responde es cn3**
 
 
 ## TODO 
