@@ -7,15 +7,15 @@ defmodule KVStore do
   ######### API #############
 
   def put(key, value) do
-    KVStore.Worker.put(worker(key), key, value)
+    Worker.put(worker(key), key, value)
   end
 
   def get(key) do
-    KVStore.Worker.get(worker(key), key)
+    Worker.get(worker(key), key)
   end 
 
   def delete(key) do
-    KVStore.Worker.delete(worker(key), key)
+    Worker.delete(worker(key), key)
   end
 
   def filter(operator, value) do 
@@ -23,7 +23,7 @@ defmodule KVStore do
     # Llamada en paralelo a todos los workers(o particiones) del cluster 
     # Funciona para ir probando pero no escala
 
-    multi_call(datanodes(), KVStore.Worker, {:filter, operator, value}, max_wait()) 
+    multi_call(datanodes(), Worker, {:filter, operator, value}, max_wait()) 
       |> do_filter()
 
   end 
@@ -64,7 +64,7 @@ defmodule KVStore do
   end
 
   defp worker(key) do
-    {KVStore.Worker, find_datanode(key)}
+    {Worker, find_datanode(key)}
   end
 
 end

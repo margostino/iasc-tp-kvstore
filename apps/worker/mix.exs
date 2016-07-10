@@ -17,7 +17,7 @@ defmodule Worker.Mixfile do
 
   def application do
     [applications: [:logger],
-     mod: {KVStoreWorker, []}]
+     mod: {WorkerApp, []}]
   end
 
   defp deps do

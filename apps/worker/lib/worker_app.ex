@@ -1,11 +1,11 @@
-defmodule KVStoreWorker do
+defmodule WorkerApp do
 
   use Application
 
   def start(_type, _args) do
 
     children = [
-      Supervisor.Spec.worker(KVStore.Worker, [])
+      Supervisor.Spec.worker(Worker, [])
     ]
 
     opts = [

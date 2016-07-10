@@ -1,12 +1,11 @@
-defmodule KVStore.Worker do
+defmodule Worker do
 
   use GenServer
 
   ########### public api ########################
-
   
   def start_link() do 
-    GenServer.start_link(KVStore.WorkerImpl, [], [name: __MODULE__])
+    GenServer.start_link(WorkerImpl, [], [name: __MODULE__])
   end
 
   def put(worker, key, value)  do
@@ -18,7 +17,7 @@ defmodule KVStore.Worker do
   end
 
   def delete(worker, key) do
-    GenServer.call(worker, {:delete, key})  
+    GenServer.call(worker, {:delete, key})
   end
 
   def filter(worker, operator, value) do

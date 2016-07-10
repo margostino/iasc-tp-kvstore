@@ -33,35 +33,22 @@ cd apps/worker
 iex --name dn3@127.0.0.1 -S mix run
 ```
 
-## Probar la interface consola 
-
-### Levantar un nodo coordinador en una terminal 
-
-```bash
-cd apps/store
-iex --name cn1@127.0.0.1 -S mix run
-```
-
-```elixir
-iex> KVStore.put("key1", "value1")
-iex> KVStore.put("key2", "value2")
-iex> KVStore.put("key3", "tres")
-iex> KVStore.get("key1")
-iex> KVStore.delete("key1")
-iex> KVStore.filter("gt", "a")
-iex> KVStore.filter("gte", "a")
-iex> KVStore.filter("lt", "a")
-iex> KVStore.filter("lte", "a")
-```
-
 ## Probar la interface REST
 
-### Deshabilitar el nodo coordinador anterior y levantar la aplicación rest 
+### Levantar un cluster de nodos coordinadores 
 
 ```bash
-cd apps/rest
-iex --name cn1@127.0.0.1 -S mix run
+iex --name cn1@127.0.0.1 --erl "-config config/cn1.config" -S mix run
 ```
+
+```bash
+iex --name cn2@127.0.0.1 --erl "-config config/cn2.config" -S mix run
+```
+
+```bash
+iex --name cn3@127.0.0.1 --erl "-config config/cn3.config" -S mix run
+```
+
 Probar interface con curl (o cualquier cliente REST)
 
 ```bash
@@ -73,7 +60,12 @@ curl -X GET http://localhost:8888/kvs/noexiste
 curl -X DELETE http://localhost:8888/kvs/key1
 ```
 
+Luego: 
+
+Deshabilitar cn1 y verificar que el coordinador que responde es cn2
+Deshabilitar cn2 y verificar que el coordinador que responde es cn3
+
+
 ## TODO 
 
-### scripts y archivos de config para armar clusters en umbrella apps
 ### error handling, nodos caídos, etc
