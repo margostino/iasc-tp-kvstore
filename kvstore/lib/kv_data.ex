@@ -34,13 +34,13 @@ defmodule KVStore.Data do
     {:reply, {:ok, firstKey, keys(firstKey, [firstKey])}, state}
   end
 
-  keys('$end_of_table', ['$end_of_table'|keysResult]) ->
-      keysResult;
+  def keys('$end_of_table', ['$end_of_table'|keysResult]) do
+    keysResult
+  end
 
-  keys(currKey, keysResult) ->
-      nextKey = :ets.next(:data_table, currKey),
-      keys(nextKey, [nextKey|keysResult])
-
+  def keys(currKey, keysResult) do
+      {nextKey = :ets.next(:data_table, currKey), keys(nextKey, [nextKey|keysResult])}
+  end
 
   @doc """
   Obtiene la lista de valores guardados
@@ -50,12 +50,14 @@ defmodule KVStore.Data do
     {:reply, {:ok, :ets.lookup(:data_table, firstKey), values(firstKey, [:ets.lookup(:data_table, firstKey)])}, state}
   end
 
-    values('$end_of_table', ['$end_of_table'|valuesResult]) ->
-        valuesResult;
+  def values('$end_of_table', ['$end_of_table'|valuesResult]) do
+        valuesResult
+  end
 
-    values(currKey, valuesResult) ->
-        :ets.lookup(:data_table, (nextKey = :ets.next(:data_table, currKey))),
-        keys(nextKey, [:ets.lookup(:data_table, nextKey)|valuesResult]).
+  def values(currKey, valuesResult) do
+      {:ets.lookup(:data_table, (nextKey = :ets.next(:data_table, currKey))),
+      keys(nextKey, [:ets.lookup(:data_table, nextKey)|valuesResult])}
+  end
 
   @doc """
   Agrega (o reemplaza si ya existe) un valor dada una clave
