@@ -3,161 +3,134 @@ defmodule WorkerImpl do
 
 	require Logger
 	
-	import Map 
-	import Enum
-
-  ########################### genserver callbacks ###########################
-
-	def init([]) do 
-
-		import String
-
-		Logger.info(~s(-- starting worker with pid #{downcase(inspect self())} --))
-
-		{:ok, new()}
-
+	@filters [:values_gt, :values_gte, :values_lt, :values_lte]
+	
+	def init(max_entry_count) do
+		{:ok, %{entries: %{}, max_entry_count: max_entry_count}}
 	end 
 
-	def handle_call({:get, key}, from, map) do
-
-		Logger.info("handling get for key: #{inspect key}")
-
-		if has_key?(map, key) do
-			{:reply, {:ok, get(map, key)}, map}
+	def handle_call({:put, key, value}, _, state) do
+		
+		unless full?(state) do
+			
+			success = {:ok, 
+				%{key: key, value: value}
+			} 
+			
+			{:reply, success, add_entry(state, key, value)}
+			
 		else
-			{:reply, {:ok, :not_found}, map}
+			
+			failure = {:error,
+				{:no_space, %{node: node(), entries: entry_count(state)}}
+			}
+			
+			{:reply, failure, state}
+			
 		end
+		
+	end
+
+	def handle_call({:get, key}, _, state) do
+
+		case get_entry(state, key) do 
+
+			{:ok, value} ->
+				{:reply, {:ok, %{key: key, value: value}}, state}
+
+			:error ->
+				{:reply, {:error, {:key_not_found, %{key: key}}}, state}
+
+		end		
 
 	end
 
+	def handle_call({:delete, key}, _,  state) do
 
-	def handle_call({:put, key, value}, from, map) do
+		case get_entry(state, key) do 
 
-		Logger.info("handling put for #{inspect key}, #{inspect value}")
+			{:ok, _} -> 
+				{:reply, {:ok, %{key: key}}, remove_entry(state, key)}
 
-		{:reply, {:ok, key}, put(map, key, value)} 
+			:error ->
+				{:reply, {:error, {:key_not_found, %{key: key}}}, state}
 
-	end
-
-	def handle_call({:delete, key}, from,  map) do
-
-		Logger.info("handling delete for key: #{inspect key}")
-
-		case (newmap = delete(map, key)) do 
-
-			^map -> {:reply, {:ok, :no_modifications}, newmap}
-			_ -> {:reply, {:ok, key}, newmap}
-
-		end    
+		end 
 
 	end
-
-	def handle_call({:filter, operator, value}, from, map) do
-
-		Logger.info("handling filter with op: #{inspect operator} and value: #{inspect value}")
-
-		result = map 
-			|> values()
-			|> filter(fn(x) -> compare().(x, operator, value) end)
-
-		{:reply, {:ok, result}, map}
-
+	
+	def handle_call({filter_selector, value}, _, state) 
+		when filter_selector in @filters do		
+		
+		{:reply, {:ok, do_filter(state, filter_selector, value)}, state}
+		
 	end
 
-	def handle_call({:keys}, from, map) do
-
-		{:reply, {:ok, keys(map)}, map}
-
+	def handle_call({:keys}, _, state) do
+		{:reply, {:ok, Map.keys(state.entries)}, state}
 	end
 
-	def handle_call({:values}, from, map) do
+	def handle_call({:values}, _, state) do
+		{:reply, {:ok, Map.values(state.entries)}, state}
+	end
 
-		{:reply, {:ok, values(map)}, map}
-
+	def handle_call({:entries}, _, state) do
+		{:reply, {:ok, Map.to_list(state.entries)}, state}
 	end
 
 
 	def handle_info(msg, state) do
 
-		Logger.info("Message #{inspect msg} not understood :(")
+		Logger.info(~s(Message #{inspect msg} not understood :())
 
 		{:noreply, state}
 
 	end
-
-	defp compare() do
-		f = fn
-		a, operator, b when operator == "gt"  -> a >  b
-		a, operator, b when operator == "gte" -> a >= b
-		a, operator, b when operator == "lt"  -> a <  b
-		a, operator, b when operator == "lte" -> a <= b
+	
+	defp do_filter(state, selector, value) do
+		
+		state.entries 
+			|> Map.values()
+			|> Enum.filter(filter_from(selector, value))
+		
 	end
-	f
+	
+	defp filter_from(:values_gt, value) do 
+		fn(x) -> x > value end
 	end
-
-
-	defp validateType(val) do
-	if !(is_bitstring(val)) do
-		:error
-	else
-		:ok
-	end
+	
+	defp filter_from(:values_gte, value) do 
+		fn(x) -> x >= value end
 	end
 
-	defp validateSize(val, size) do
-	if !(String.length(val) <= size) do
-		:error
-	else
-		:ok
-	end
+	defp filter_from(:values_lt, value) do 
+		fn(x) -> x < value end
 	end
 
-	defp validate(operator) do
-	operators = ["gt", "gte", "lt", "lte"]
-	if (any?(operators, fn(x) -> x == operator end)) do
-		:ok
-	else
-		{:error, "Operator should be: gt, gte, lt or lte"}
-	end
+	defp filter_from(:values_lte, value) do 
+		fn(x) -> x <= value end
 	end
 
-	defp validate(key, value) do
+	
+	defp add_entry(state, key, value) do 
+		%{state | entries: Map.put(state.entries, key, value)}
+	end 
 
-	key_size = Application.get_env(:worker, :max_key_size)
-	value_size = Application.get_env(:worker, :max_value_size)
+	defp remove_entry(state, key) do 
+		%{state | entries: Map.delete(state.entries, key)}
+	end 
 
-	errors = []
+	defp get_entry(state, key) do 
+		Map.fetch(state.entries, key)
+	end 
 
-	#Validate KEY
-	case validateType(key) do
-		:error ->
-			errors = ["Key must be a string" | errors]
-			:ok ->
-				case validateSize(key, key_size) do
-					:error ->
-						errors = ["Wrong key size. Size must be #{inspect key_size}" | errors]
-						:ok -> 
-							"nothing"
-						end
-					end
-
-	#Validate VALUE
-	case validateType(value) do
-		:error -> errors = into(errors, ["Value must be String"])
-		:ok -> case validateSize(value, value_size) do
-			:error ->
-				errors = ["Value wrong size. Size must be #{value_size}" | errors]
-				:ok -> "nothing"
-			end
-		end
-
-		if (length(errors) > 0) do
-			{:error, errors}
-		else
-			{:ok}
-		end
-
+	defp full?(state) do 
+		not(entry_count(state) < state.max_entry_count)
 	end
 
+	defp entry_count(state) do 
+		map_size(state.entries)
 	end
 
+
+end

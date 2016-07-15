@@ -6,4 +6,7 @@ config :store,
 		:"dn2@127.0.0.1",
 		:"dn3@127.0.0.1"
 	], 
-	max_wait: 3 #seconds
+	remote_worker_alias: :data_worker, 
+	max_key_size: 10, 
+	max_value_size: 100
+	

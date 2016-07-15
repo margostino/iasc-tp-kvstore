@@ -1,5 +1,4 @@
 use Mix.Config
 
 config :worker,
-	max_key_size: 10,
-	max_value_size: 100
+	max_entry_count: 1000

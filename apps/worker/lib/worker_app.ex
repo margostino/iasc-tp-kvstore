@@ -1,20 +1,24 @@
 defmodule WorkerApp do
 
-  use Application
+	use Application
 
-  def start(_type, _args) do
+	def start(_type, _args) do
+		
+		import Application
+		
+		max_entry_count = get_env(:worker, :max_entry_count) 
+		
+		children = [
+			Supervisor.Spec.worker(Worker, [max_entry_count])
+		]
 
-    children = [
-      Supervisor.Spec.worker(Worker, [])
-    ]
+		opts = [
+			strategy: :one_for_one,
+			name: KVStore.WorkerSupervisor
+		]
 
-    opts = [
-      strategy: :one_for_one,
-      name: KVStore.WorkerSupervisor
-    ]
-    
-    Supervisor.start_link(children, opts)
+		Supervisor.start_link(children, opts)
 
-  end
+	end
 
 end

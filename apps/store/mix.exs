@@ -16,7 +16,7 @@ defmodule Store.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :worker]]
+    [applications: [:logger]]
   end
 
   defp deps do
