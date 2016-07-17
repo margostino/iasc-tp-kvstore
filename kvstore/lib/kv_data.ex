@@ -45,8 +45,7 @@ defmodule KVStore.Data do
   Obtiene la lista de claves guardadas
   """
   def handle_call({:keys}, _from, state) do
-    firstKey = :ets.first(:data_table)
-    {:reply, {:ok, firstKey, keys(firstKey, [firstKey])}, state}
+      {:reply, {:ok, keys(:ets.first(:data_table), [])}, state}
   end
 
   @doc """
@@ -61,27 +60,25 @@ defmodule KVStore.Data do
   Obtiene la lista de valores guardados
   """
   def handle_call({:values}, _from, state) do
-    firstKey = :ets.first(:data_table)
-    {:reply, {:ok, :ets.lookup(:data_table, firstKey), values(firstKey, [:ets.lookup(:data_table, firstKey)])}, state}
+    {:reply, {:ok, values(:ets.first(:data_table), [])}, state}
   end
 
-  def keys('$end_of_table', ['$end_of_table'|keysResult]) do
+  def keys('$end_of_table', keysResult) do
     keysResult
   end
 
   def keys(currKey, keysResult) do
       nextKey = :ets.next(:data_table, currKey)
-      {nextKey, keys(nextKey, [nextKey|keysResult])}
+      keys(nextKey, [currKey|keysResult])
   end
 
-  def values('$end_of_table', ['$end_of_table'|valuesResult]) do
+  def values('$end_of_table', [valuesResult]) do
         valuesResult
   end
 
   def values(currKey, valuesResult) do
       nextKey = :ets.next(:data_table, currKey)
-      {:ets.lookup(:data_table, nextKey),
-      keys(nextKey, [:ets.lookup(:data_table, nextKey)|valuesResult])}
+      values(nextKey, [:ets.lookup(:data_table, currKey)|valuesResult])
   end
 
 
