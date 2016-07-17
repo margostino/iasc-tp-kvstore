@@ -22,14 +22,16 @@ defmodule KVStore.Data do
   """
   def handle_cast({:put, key, value}, state) do
     Logger.info "PUT: #{key},#{value}"
-    {:noreply, :ets.insert(:data_table, {key, value}), state}
+    :ets.insert(:data_table, {key, value})
+    {:noreply, state}
   end
 
   @doc """
   Borra un valor a partir de la clave
   """
   def handle_cast({:delete, key}, state) do
-    {:noreply, :ets.delete(:data_table, key), state}
+    :ets.delete(:data_table, key)
+    {:noreply, state}
   end
 
   ## Client API
