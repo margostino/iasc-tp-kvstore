@@ -47,7 +47,8 @@ defmodule KVStore.Data do
   Obtiene la lista de claves guardadas
   """
   def handle_call({:keys}, _from, state) do
-      {:reply, {:ok, keys(:ets.first(:data_table), [])}, state}
+    keysResult = keys(:ets.first(:data_table), [])
+    {:reply, {:ok, keysResult}, state}
   end
 
   @doc """
@@ -62,7 +63,8 @@ defmodule KVStore.Data do
   Obtiene la lista de valores guardados
   """
   def handle_call({:values}, _from, state) do
-    {:reply, {:ok, values(:ets.first(:data_table), [])}, state}
+    valuesResult = values(:ets.first(:data_table), [])
+    {:reply, {:ok, valuesResult}, state}
   end
 
   def keys('$end_of_table', keysResult) do
