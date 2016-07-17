@@ -7,15 +7,29 @@ defmodule KVStore.Data do
 
   def start_link do
     Logger.info "Starting server"
+    create()
     GenServer.start_link(__MODULE__, [], name: {:global, __MODULE__})
-    init(:data_table)
   end
 
-  def init(table) do
-    # 3. We have replaced the names map by the ETS table
-    names = :ets.new(table, [:named_table, :private, read_concurrency: true])
+  def create() do
+    names = :ets.new(:data_table, [:named_table, :private, read_concurrency: true])
     refs  = %{}
-    {:ok, {names, refs}}
+    IO.puts "#{inspect names} #{inspect refs}"
+  end
+
+  @doc """
+  Agrega (o reemplaza si ya existe) un valor dada una clave
+  """
+  def handle_cast({:put, key, value}, state) do
+    Logger.info "PUT: #{key},#{value}"
+    {:noreply, :ets.insert(:data_table, {key, value}), state}
+  end
+
+  @doc """
+  Borra un valor a partir de la clave
+  """
+  def handle_cast({:delete, key}, state) do
+    {:noreply, :ets.delete(:data_table, key), state}
   end
 
   ## Client API
@@ -35,15 +49,6 @@ defmodule KVStore.Data do
     {:reply, {:ok, firstKey, keys(firstKey, [firstKey])}, state}
   end
 
-  def keys('$end_of_table', ['$end_of_table'|keysResult]) do
-    keysResult
-  end
-
-  def keys(currKey, keysResult) do
-      nextKey = :ets.next(:data_table, currKey)
-      {nextKey, keys(nextKey, [nextKey|keysResult])}
-  end
-
   @doc """
   Obtiene los valores que cumplen la condición de valor de referencia y de operador
   """
@@ -60,6 +65,15 @@ defmodule KVStore.Data do
     {:reply, {:ok, :ets.lookup(:data_table, firstKey), values(firstKey, [:ets.lookup(:data_table, firstKey)])}, state}
   end
 
+  def keys('$end_of_table', ['$end_of_table'|keysResult]) do
+    keysResult
+  end
+
+  def keys(currKey, keysResult) do
+      nextKey = :ets.next(:data_table, currKey)
+      {nextKey, keys(nextKey, [nextKey|keysResult])}
+  end
+
   def values('$end_of_table', ['$end_of_table'|valuesResult]) do
         valuesResult
   end
@@ -68,21 +82,6 @@ defmodule KVStore.Data do
       nextKey = :ets.next(:data_table, currKey)
       {:ets.lookup(:data_table, nextKey),
       keys(nextKey, [:ets.lookup(:data_table, nextKey)|valuesResult])}
-  end
-
-  @doc """
-  Agrega (o reemplaza si ya existe) un valor dada una clave
-  """
-  def handle_cast({:put, key, value}, state) do
-    Logger.info "PUT: #{key},#{value}"
-    {:noreply, :ets.insert(:data_table, {key, value}), state}
-  end
-
-  @doc """
-  Borra un valor a partir de la clave
-  """
-  def handle_cast({:delete, key}, state) do
-    {:noreply, :ets.delete(:data_table, key), state}
   end
 
 
