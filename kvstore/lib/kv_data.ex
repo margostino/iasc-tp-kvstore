@@ -1,5 +1,5 @@
 defmodule KVStore.Data do
-  @@moduledoc """
+  @moduledoc """
   Nodo de datos para la KVStore
   """
   use GenServer
@@ -8,11 +8,12 @@ defmodule KVStore.Data do
   def start_link do
     Logger.info "Starting server"
     GenServer.start_link(__MODULE__, [], name: {:global, __MODULE__})
+    init(:data_table)
   end
 
   def init(table) do
     # 3. We have replaced the names map by the ETS table
-    names = :ets.new(:data_table, [:named_table, :private, read_concurrency: true])
+    names = :ets.new(table, [:named_table, :private, read_concurrency: true])
     refs  = %{}
     {:ok, {names, refs}}
   end
@@ -21,7 +22,7 @@ defmodule KVStore.Data do
   def handle_call({:get, key}, _from, state) do
     Logger.info "GET: #{key}"
     case :ets.member(:data_table, key) do
-      true -> {:reply, {:ok, Map.get(map, key)}, state}
+      true -> {:reply, {:ok, :ets.lookup(:data_table, key)}, state}
       false -> {:reply, {:ok, :not_found}, state}
     end
   end
@@ -39,7 +40,16 @@ defmodule KVStore.Data do
   end
 
   def keys(currKey, keysResult) do
-      {nextKey = :ets.next(:data_table, currKey), keys(nextKey, [nextKey|keysResult])}
+      nextKey = :ets.next(:data_table, currKey)
+      {nextKey, keys(nextKey, [nextKey|keysResult])}
+  end
+
+  @doc """
+  Obtiene los valores que cumplen la condición de valor de referencia y de operador
+  """
+  def handle_call({:filter, value, operator}, _from, state) do
+    results = :ets.select(:data_table, :ets.fun2ms(fn(x) -> compare().(x, value, operator) end))
+    {:reply, {:ok, results}, state}
   end
 
   @doc """
@@ -55,7 +65,8 @@ defmodule KVStore.Data do
   end
 
   def values(currKey, valuesResult) do
-      {:ets.lookup(:data_table, (nextKey = :ets.next(:data_table, currKey))),
+      nextKey = :ets.next(:data_table, currKey)
+      {:ets.lookup(:data_table, nextKey),
       keys(nextKey, [:ets.lookup(:data_table, nextKey)|valuesResult])}
   end
 
@@ -64,26 +75,19 @@ defmodule KVStore.Data do
   """
   def handle_cast({:put, key, value}, state) do
     Logger.info "PUT: #{key},#{value}"
-    {:noreply, :ets.insert(:data_table, key, value)}
+    {:noreply, :ets.insert(:data_table, {key, value}), state}
   end
 
   @doc """
   Borra un valor a partir de la clave
   """
   def handle_cast({:delete, key}, state) do
-    {:noreply, :ets.delete(:data_table, key)}
+    {:noreply, :ets.delete(:data_table, key), state}
   end
 
-  @doc """
-  Obtiene los valores que cumplen la condición de valor de referencia y de operador
-  """
-  def handle_call({:filter, value, operator}, _from, state) do
-    results = :ets.select(:data_table, :ets.fun2ms(fn(x) -> compare().(x, value, operator) end))
-    {:reply, {:ok, results}, state}
-  end
 
   def handle_info(msg, state) do
-    IO.puts "Message not understood :("
+    IO.puts "Message not understood :( #{inspect msg}"
     {:noreply, state}
   end
 
