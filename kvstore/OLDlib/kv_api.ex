@@ -56,9 +56,9 @@ defmodule KVStore.Api do
         GenServer.call({:global, KVStore.Data}, {:filter, value, operator})
   end
 
-  def handle_info(msg, state) do
+  def handle_info(msg, ets) do
     IO.puts "Message not understood :( #{inspect msg}"
-    {:noreply, state}
+    {:noreply, ets}
   end
 
   ## Private -------------------------------------------------------------------
