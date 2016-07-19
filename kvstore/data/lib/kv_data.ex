@@ -19,13 +19,13 @@ defmodule KVData do
   end
 
   @doc "handle cast is only a async call that can be received or not by the gen server. In this case the server should always avoid returning anything. In this case we are using create_table for didactic purposes"
-  def handle_cast({:create_table, table_name}, state) do
-    KVDataStore.new_table(table_name)
+  def handle_cast({:create_table}, state) do
+    KVDataStore.new_table()
     {:noreply, state}
   end
 
-  def handle_cast({:delete, table, name}, state) do
-    KVDataStore.delete(table, name)
+  def handle_cast({:delete, name}, state) do
+    KVDataStore.delete(name)
     {:noreply, state}
   end
 
@@ -36,22 +36,34 @@ defmodule KVData do
     end
   end
 
-  def handle_call({:put, table, name, value}, _from,  state) do
-    {:reply, KVDataStore.put(table, name, value), state}
+  def handle_call({:put, key, value}, _from,  state) do
+    {:reply, KVDataStore.put(key, value), state}
   end
 
-  def handle_call({:get, table, name}, _from,  state) do
-    case KVDataStore.get(table, name) do
+  def handle_call({:get, name}, _from,  state) do
+    case KVDataStore.get(name) do
       {:error, _} -> {:reply, {:error, :failed_get_ets}, state}
       {:ok, value} -> {:reply, value, state}
-      {_ , _} -> {:reply, {:error, :unexpectedError}, state}
+      {_ , _} -> {:reply, {:error, :unexpected_error}, state}
     end
   end
 
-  def handle_call({:update, table, name, value}, _from, state) do
-    case KVDataStore.update(table,name,value) do
+  def handle_call({:update, name, value}, _from, state) do
+    case KVDataStore.update(name,value) do
       {:error, :not_found} -> {:reply, :failed_update_ets, state}
       {:ok, _} -> {:reply, :succesful_update, state}
     end
+  end
+
+  def handle_call({:filter, value, operator}, _from, state) do
+    case KVDataStore.filter(value, operator) do
+      {:error, _} -> {:reply, {:error, :not_found}, state}
+      {:ok, results} -> {:reply, {:ok, results}, state}
+    end
+  end
+
+  def handle_info(msg, state) do
+    Logger.info "Message not understood :( #{inspect msg}"
+    {:noreply, state}
   end
 end

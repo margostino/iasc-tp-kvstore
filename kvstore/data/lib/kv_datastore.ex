@@ -15,8 +15,10 @@ defmodule KVDataStore do
   @moduledoc "Api del Nodo de datos para la KVStore  require Logger"
   require Logger
 
-  def new_table(table_name) do
-    :ets.new(table_name, [:named_table, :private, read_concurrency: true])
+  @table_name :data_table
+
+  def new_table() do
+    :ets.new(@table_name, [:named_table, :private, read_concurrency: true])
   end
 
   def is_table_defined(table_name) do
@@ -24,33 +26,47 @@ defmodule KVDataStore do
   end
 
   @doc "Obtiene el valor a partir de una clave"
-  def get(table, key) do
+  def get(key) do
     Logger.info "GET: #{key}"
-    case :ets.lookup(table, key) do
+    case :ets.lookup(@table_name, key) do
 	[{_key, value}] -> {:ok, value}
 	[] -> {:error, :not_found}
     end
   end
 
   @doc "Agrega (o reemplaza si ya existe) un valor dada una clave"
-  def put(table, key, value) do
+  def put(key, value) do
     Logger.info "PUT: #{key},#{value}"
-    :ets.insert(table, {key, value})
+    case (validate(key, value)) do
+      {:error, reasons} -> {:error, reasons}
+      :ok -> :ets.insert(@table_name, {key, value})
+    end
   end
 
   @doc "Borra un valor a partir de la clave"
-  def delete(table, key) do
+  def delete(key) do
     Logger.info "DELETE: #{key}"
-    :ets.match_delete(table, {key, :_})
+    :ets.match_delete(@table_name, {key, :_})
   end
 
   @doc "Actualiza un valor a partir de la clave"
-  def update(table, key, new_value) do
+  def update(key, new_value) do
     Logger.info "UPDATE: #{key},#{new_value}"
-    case :ets.lookup(table, key) do
-    	[{_key, _}] -> delete(table, key)
-			   put(table, key, new_value)
+    case :ets.lookup(@table_name, key) do
+    	[{_key, _}] -> delete(key)
+			   put(key, new_value)
 	    [] -> {:error, :not_found}
+    end
+  end
+
+  @doc "Obtiene los valores que cumplen la condición de valor de referencia y de operador"
+  def filter(value, operator) do
+    operator = String.downcase(operator)
+    case (validate(operator)) do
+      {:error, reasons} -> {:error, reasons}
+      :ok ->
+        results = :ets.select(@table_name0, :ets.fun2ms(fn(x) -> compare().(x, value, operator) end))
+        {:ok, results}
     end
   end
 

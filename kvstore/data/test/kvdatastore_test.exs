@@ -20,48 +20,49 @@ end
 
 defmodule KVDataStoreTest do
   use ExUnit.Case
+  @table_name :data_table
 
   test "add table and check if the tables are defined or not" do
-    KVDataStore.new_table(:onetable)
-    assert KVDataStore.is_table_defined(:onetable) == {:ok, :onetable}
+    KVDataStore.new_table()
+    assert KVDataStore.is_table_defined(@table_name) == {:ok, @table_name}
     assert KVDataStore.is_table_defined(:some_table) == {:error, :none_found}
   end
 
   test "initialize, set 1 and get it" do
-    KVDataStore.new_table(:some_table)
-    KVDataStore.put(:some_table, "one", 1)
+    KVDataStore.new_table()
+    KVDataStore.put("one", "1")
 
-    assert KVDataStore.get(:some_table, "one") == {:ok, 1}
+    assert KVDataStore.get("one") == {:ok, "1"}
   end
 
   test "set multiple and get" do
-    KVDataStore.new_table(:some_table)
-    assert KVDataStore.is_table_defined(:some_table) == {:ok, :some_table}
-    KVDataStore.put(:some_table, "one", 1)
-    KVDataStore.put(:some_table, :two, 2)
+    KVDataStore.new_table()
+    assert KVDataStore.is_table_defined(@table_name) == {:ok, @table_name}
+    KVDataStore.put("one", "1")
+    KVDataStore.put(":two", "2")
 
-    assert KVDataStore.get(:some_table, "two") == {:error, :not_found}
-    assert KVDataStore.get(:some_table, :two) == {:ok, 2}
+    assert KVDataStore.get("two") == {:error, :not_found}
+    assert KVDataStore.get(":two") == {:ok, "2"}
   end
 
   test "set and delete" do
-    KVDataStore.new_table(:some_table)
-    KVDataStore.put(:some_table, :something, "something")
+    KVDataStore.new_table()
+    KVDataStore.put(":something", "something")
 
-    assert KVDataStore.get(:some_table, :something) == {:ok, "something"}
+    assert KVDataStore.get(":something") == {:ok, "something"}
 
-    assert KVDataStore.delete(:some_table, :something)
-    assert KVDataStore.get(:some_table, :something) == {:error, :not_found}
+    assert KVDataStore.delete(":something")
+    assert KVDataStore.get(":something") == {:error, :not_found}
   end
 
   test "set and update" do
-    KVDataStore.new_table(:some_table)
-    KVDataStore.put(:some_table, :one, 1)
+    KVDataStore.new_table()
+    KVDataStore.put(":one", "1")
 
-    assert KVDataStore.get(:some_table, :one) == {:ok, 1}
+    assert KVDataStore.get(":one") == {:ok, "1"}
 
-    KVDataStore.update(:some_table, :one, "one")
-    assert KVDataStore.get(:some_table, :one) == {:ok, "one"}
+    KVDataStore.update(":one", "one")
+    assert KVDataStore.get(":one") == {:ok, "one"}
   end
 
 end
