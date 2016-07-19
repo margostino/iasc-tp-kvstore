@@ -1,10 +1,15 @@
 import KVDataStore
 
 defmodule KVData do
+  @moduledoc """
+  Nodo de datos para la KVStore
+  """
   use GenServer
+  require Logger
 
   @doc "stating up the server"
   def start_link do
+    Logger.info "Starting server"
     GenServer.start_link(__MODULE__, [], [{:name, __MODULE__}])
   end
 
@@ -49,5 +54,4 @@ defmodule KVData do
       {:ok, _} -> {:reply, :succesful_update, state}
     end
   end
-
 end
