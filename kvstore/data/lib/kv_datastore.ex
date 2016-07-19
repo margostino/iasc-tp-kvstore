@@ -70,6 +70,10 @@ defmodule KVDataStore do
     end
   end
 
+  def break() do
+    Process.exit({:global, KVData}, :shutdown)
+  end
+
   """
   Validations
   """
