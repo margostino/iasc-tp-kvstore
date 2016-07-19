@@ -48,8 +48,8 @@ defmodule KVData do
     end
   end
 
-  def handle_call({:update, name, value}, _from, state) do
-    case KVDataStore.update(name,value) do
+  def handle_call({:update, key, value}, _from, state) do
+    case KVDataStore.update(key, value) do
       {:error, :not_found} -> {:reply, :failed_update_ets, state}
       {:ok, _} -> {:reply, :succesful_update, state}
     end
@@ -59,6 +59,20 @@ defmodule KVData do
     case KVDataStore.filter(value, operator) do
       {:error, _} -> {:reply, {:error, :not_found}, state}
       {:ok, results} -> {:reply, {:ok, results}, state}
+    end
+  end
+
+  def handle_call({:values}, _from, state) do
+    case KVDataStore.values() do
+      {:error, _} -> {:reply, :not_found, state}
+      {:ok, results} -> {:reply, results, state}
+    end
+  end
+
+  def handle_call({:keys}, _from, state) do
+    case KVDataStore.keys() do
+      {:error, _} -> {:reply, :not_found, state}
+      {:ok, results} -> {:reply, results, state}
     end
   end
 

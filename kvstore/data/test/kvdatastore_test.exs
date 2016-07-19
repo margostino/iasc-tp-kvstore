@@ -65,4 +65,45 @@ defmodule KVDataStoreTest do
     assert KVDataStore.get(":one") == {:ok, "one"}
   end
 
+  test "get keys" do
+    KVDataStore.new_table()
+    {response, keys0} = KVDataStore.keys()
+    assert response == :ok
+    assert keys0 == []
+
+    KVDataStore.put(":one", "1")
+    assert KVDataStore.get(":one") == {:ok, "1"}
+    KVDataStore.put(":two", "2")
+    assert KVDataStore.get(":two") == {:ok, "2"}
+    KVDataStore.put(":three", "3")
+    assert KVDataStore.get(":three") == {:ok, "3"}
+
+    {response, keys} = KVDataStore.keys()
+    assert response == :ok
+
+    assert ListSearch.search_pattern(keys, ":one") == {:ok, ":one"}
+    assert ListSearch.search_pattern(keys, ":two") == {:ok, ":two"}
+    assert ListSearch.search_pattern(keys, ":three") == {:ok, ":three"}
+  end
+
+  test "get values" do
+    KVDataStore.new_table()
+    {response, values0} = KVDataStore.values()
+    assert response == :ok
+    assert values0 == []
+
+    KVDataStore.put(":one", "1")
+    assert KVDataStore.get(":one") == {:ok, "1"}
+    KVDataStore.put(":two", "2")
+    assert KVDataStore.get(":two") == {:ok, "2"}
+    KVDataStore.put(":three", "3")
+    assert KVDataStore.get(":three") == {:ok, "3"}
+
+    {response, values} = KVDataStore.values()
+    assert response == :ok
+    assert ListSearch.search_pattern(values, "1") == {:ok, "1"}
+    assert ListSearch.search_pattern(values, "2") == {:ok, "2"}
+    assert ListSearch.search_pattern(values, "3") == {:ok, "3"}
+  end
+
 end

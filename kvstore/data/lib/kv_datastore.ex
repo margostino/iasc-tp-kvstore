@@ -54,7 +54,7 @@ defmodule KVDataStore do
     Logger.info "UPDATE: #{key},#{new_value}"
     case :ets.lookup(@table_name, key) do
     	[{_key, _}] -> delete(key)
-			   put(key, new_value)
+			   {:ok, put(key, new_value)}
 	    [] -> {:error, :not_found}
     end
   end
@@ -65,9 +65,39 @@ defmodule KVDataStore do
     case (validate(operator)) do
       {:error, reasons} -> {:error, reasons}
       :ok ->
-        results = :ets.select(@table_name0, :ets.fun2ms(fn(x) -> compare().(x, value, operator) end))
+        results = :ets.select(@table_name, :ets.fun2ms(fn(x) -> compare().(x, value, operator) end))
         {:ok, results}
     end
+  end
+
+  def keys(:"$end_of_table", keysResult) do
+    keysResult
+  end
+
+  def keys(currKey, keysResult) do
+    Logger.info "keys(currKey, keysResult) #{currKey}, #{keysResult})"
+    keys(:ets.next(@table_name, currKey), [currKey|keysResult])
+  end
+
+  @doc "Obtiene la lista de claves guardadas"
+  def keys() do
+    Logger.info "keys"
+    {:ok, keys(:ets.first(@table_name), [])}
+  end
+
+  def values(:"$end_of_table", valuesResult) do
+    Logger.info "values: #{valuesResult}"
+    valuesResult
+  end
+
+  def values(currKey, valuesResult) do
+      [{_, value}] = :ets.lookup(@table_name, currKey)
+      values(:ets.next(@table_name, currKey), [value|valuesResult])
+  end
+
+  @doc "Obtiene la lista de valores guardados"
+  def values() do
+    {:ok, values(:ets.first(@table_name), [])}
   end
 
   def break() do
