@@ -1,10 +1,8 @@
 defmodule Worker do
-
 	use GenServer
-
 	import GenServer
 
-	def start_link(max_entry_count) do 
+	def start_link(max_entry_count) do
 		start_link(WorkerImpl, max_entry_count, [name: :data_worker])
 	end
 
@@ -20,11 +18,8 @@ defmodule Worker do
 		call(worker, {:delete, key})
 	end
 
-	def filter(worker, operator, value) do
-		call(worker, {:filter, operator, value})
-	end
+	# def filter(worker, operator, value) do
+	# 	call(worker, {:filter, operator, value})
+	# end
 
 end
-
-
-
