@@ -3,7 +3,7 @@ defmodule WorkerImpl do
 
 	require Logger
 
-	@filters [:values_gt, :values_gte, :values_lt, :values_lte]
+	@filters [{:values_gt,:>},{:values_gte,:>=},{:values_lt,:<},{:values_lte,:<=}]
 	@table_name :data_table
 
 	def init(max_entry_count) do
@@ -42,11 +42,6 @@ defmodule WorkerImpl do
 		end
 	end
 
-	def handle_call({filter_selector, value}, _, state)
-		when filter_selector in @filters do
-		{:reply, {:ok, do_filter(state, filter_selector, value)}, state}
-	end
-
 	def handle_call({:keys}, _, state) do
 		{:ok, keys} = keys()
 		{:reply, {:ok, keys}, state}
@@ -57,35 +52,18 @@ defmodule WorkerImpl do
 		{:reply, {:ok, values}, state}
 	end
 
-	# def handle_call({:entries}, _, state) do
-	# 	{:reply, {:ok, :ets.i(@table_name)}, state}
-	# end
+	def handle_call({filter_selector, value}, _, state) do
+	 	{:reply, {:ok, filter(value, filter_selector)}, state}
+	end
 
 	def handle_info(msg, state) do
 		Logger.info(~s(Message #{inspect msg} not understood :())
 		{:noreply, state}
 	end
 
-	defp do_filter(state, selector, value) do
-		state.entries
-			|> Map.values()
-			|> Enum.filter(filter_from(selector, value))
-	end
-
-	defp filter_from(:values_gt, value) do
-		fn(x) -> x > value end
-	end
-
-	defp filter_from(:values_gte, value) do
-		fn(x) -> x >= value end
-	end
-
-	defp filter_from(:values_lt, value) do
-		fn(x) -> x < value end
-	end
-
-	defp filter_from(:values_lte, value) do
-		fn(x) -> x <= value end
+	def filter(value, operator) do
+		 :ets.select(@table_name, [{{:"$1",:"$2"},
+		  [{@filters[operator], :"$2", value}], [:"$1"]}])		
 	end
 
 	def keys(:"$end_of_table", keysResult) do
