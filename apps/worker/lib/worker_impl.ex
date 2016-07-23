@@ -63,7 +63,7 @@ defmodule WorkerImpl do
 
 	def filter(value, operator) do
 		 :ets.select(@table_name, [{{:"$1",:"$2"},
-		 [{@filters[operator], :"$2", value}], [:"$1"]}])
+		 [{@filters[operator], :"$2", value}], [:"$2"]}])
 	end
 
 	def keys(:"$end_of_table", keysResult) do
