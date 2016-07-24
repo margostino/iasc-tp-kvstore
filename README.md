@@ -9,6 +9,14 @@ Elementos:
 * Supervisores
 * Alias locales y globales
 
+## Integrantes del equipo
+
+* Cristian Erik Ames Masek
+* Alejandro D'Ambrosio
+* Martín D'Agostino
+* Ignacio Hugo Gomez
+*	Marcelo Nelson
+
 ## Modo de uso
 
 ### Obtención de dependencias y compilación en raíz del proyecto
@@ -91,6 +99,6 @@ curl -X GET http://localhost:8888/entries?values_lte=value2
 
 #### Para probar el mecanismo de failover/takeover:
 
-- Deshabilitar cn1 y volver a realizar la prueba anterior para verificar que el coordinador que responde es cn2
-- Deshabilitar cn2 y volver a realizar la prueba anterior para verificar que el coordinador que responde es cn3
-- Iniciar nuevamente cn1 y cn2, volver a realizar la prueba anterior para verificar que el coordinador que responde es cn1
+* Deshabilitar cn1 y volver a realizar la prueba anterior para verificar que el coordinador que responde es cn2
+* Deshabilitar cn2 y volver a realizar la prueba anterior para verificar que el coordinador que responde es cn3
+* Iniciar nuevamente cn1 y cn2, volver a realizar la prueba anterior para verificar que el coordinador que responde es cn1
