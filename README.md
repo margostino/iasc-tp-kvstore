@@ -9,31 +9,33 @@ Elementos:
 * Supervisores
 * Alias locales y globales
 
-## Uso
+## Modo de uso
+
+### Obtención de dependencias y compilación en raíz del proyecto
 
 ```bash
-mix deps.get 
+mix deps.get
 mix compile
 ```
 
-## Levantar nodos de datos en tres terminales diferentes 
+### Levantar nodos de datos en tres terminales diferentes
 
 ```bash
-cd apps/worker 
-iex --name dn1@127.0.0.1 -S mix run
+cd apps/worker
+./run.sh 1
 ```
 
 ```bash
-cd apps/worker 
-iex --name dn2@127.0.0.1 -S mix run
+cd apps/worker
+./run.sh 2
 ```
 
 ```bash
-cd apps/worker 
-iex --name dn3@127.0.0.1 -S mix run
+cd apps/worker
+./run.sh 3
 ```
 
-## Parar probar la interface consola 
+### Para probar la interface consola (CLI)
 
 ```bash
 cd apps/store
@@ -54,23 +56,24 @@ iex> KVStore.values_lte("v")
 iex> KVStore.values_lt("v")
 ```
 
-## Para probar la interface REST
+### Para probar la interface REST
 
-### Levantar un cluster de nodos coordinadores 
+#### Levantar un cluster de nodos coordinadores
 
 ```bash
-iex --name cn1@127.0.0.1 --erl "-config config/cn1.config" -S mix run
+./runNode.sh 1
 ```
 
 ```bash
-iex --name cn2@127.0.0.1 --erl "-config config/cn2.config" -S mix run
+./runNode.sh 2
 ```
 
 ```bash
-iex --name cn3@127.0.0.1 --erl "-config config/cn3.config" -S mix run
+./runNode.sh 3
 ```
 
-Probar interface con curl (o cualquier cliente REST)
+#### Probar interface con curl (o cualquier cliente REST)
+Para ello se pueden ejecutar sentencias desde línea de comando o previamente, para agergar datos, ejecutar el script "populateREST.sh [cantidad_de_valores]" para agregar elementos
 
 ```bash
 curl -X POST --data "key=key1&value=value1" http://localhost:8888/entries
@@ -78,20 +81,16 @@ curl -X POST --data "key=key2&value=value2" http://localhost:8888/entries
 curl -X POST --data "key=key3&value=value3" http://localhost:8888/entries
 curl -X GET http://localhost:8888/entries/key1
 curl -X GET http://localhost:8888/entries/key3
-curl -X GET http://localhost:8888/entries/noexiste
 curl -X DELETE http://localhost:8888/entries/key1
-curl -X GET http://localhost:8888/entries?values_gt=k
-curl -X GET http://localhost:8888/entries?values_gte=k
-curl -X GET http://localhost:8888/entries?values_lt=k
-curl -X GET http://localhost:8888/entries?values_lte=k
+curl -X GET http://localhost:8888/entries/key1
+curl -X GET http://localhost:8888/entries?values_gt=value2
+curl -X GET http://localhost:8888/entries?values_gte=value2
+curl -X GET http://localhost:8888/entries?values_lt=value2
+curl -X GET http://localhost:8888/entries?values_lte=value2
 ```
 
-###Luego: 
+#### Para probar el mecanismo de failover/takeover:
 
-Deshabilitar cn1 y verificar que el coordinador que responde es cn2
-Deshabilitar cn2 y verificar que el coordinador que responde es cn3
-
-
-## TODO 
-
-### scripts bash para levantar clusters, testing, refactoring, cliente http, integracion con branch ets, hacer que los nodos de coordinacion dependan desde el inicio de los nodos de datos(sync nodes en archivos config),etc
+- Deshabilitar cn1 y volver a realizar la prueba anterior para verificar que el coordinador que responde es cn2
+- Deshabilitar cn2 y volver a realizar la prueba anterior para verificar que el coordinador que responde es cn3
+- Iniciar nuevamente cn1 y cn2, volver a realizar la prueba anterior para verificar que el coordinador que responde es cn1
